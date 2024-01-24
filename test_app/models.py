@@ -1,9 +1,10 @@
 from django.db import models
 
 from .storage import NoReadFileSystemStorage
+from .fields import FixedImageField
 
 class TestModel(models.Model):
-    image = models.ImageField(
+    image = FixedImageField(
         upload_to='images/', 
         storage=NoReadFileSystemStorage(),
         width_field="width",

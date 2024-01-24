@@ -1,26 +1,25 @@
 
-
-from django.core.files.images import get_image_dimensions
 from django.db.models.fields.files import ImageFieldFile, ImageField
 
-
-
 class FixedImageFieldFile(ImageFieldFile):
+    
+    def save(self, name, content, save=True):
+        name = self.field.generate_filename(self.instance, name)
+        self.name = self.storage.save(name, content, max_length=self.field.max_length)
+    
+        # Do NOT call setattr(self.instance, self.field.name, self.name) because
+        # this will call update_dimensions_field with force=True
+        # The only other function of the descriptor is to set the width and height
+        # fields if appropriate
+        # However, the width and height fields cannot have changed in between
+        # the call to the descriptors __set__ and the call to save() here
+        # This avoids an extra round-trip to our storage API
+        self.instance.__dict__[self.field.name] = self.name
+        self._committed = True
 
-    # This is my attempt to delegate the dimensions to the underlying field
-    # Doesn't sem to work
-    def _get_image_dimensions(self):
-        if not hasattr(self, "_dimensions_cache"):
-            if hasattr(self, "_file"):
-                file = self._file
-
-                # Duck type image-like objects
-
-                if hasattr(file, "_get_image_dimensions"):
-                    self._dimensions_cache = file._get_image_dimensions()
-                    return self._dimensions_cache
-        
-        return super()._get_image_dimensions()
+        # Save the object because it has changed, unless save is False
+        if save:
+            self.instance.save()
 
 
 

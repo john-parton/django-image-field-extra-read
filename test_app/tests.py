@@ -1,9 +1,7 @@
 import base64
-from io import BytesIO
 
 from django.test import TestCase
 from django.core.files.base import ContentFile
-from django.core.files.images import ImageFile
 
 from .models import TestModel
 
@@ -16,28 +14,31 @@ HEIGHT = 67
 
 class AnimalTestCase(TestCase):
 
-    def test_can_write_image_file(self):
+    def test_can_filename_mangling_preserved(self):
 
-        instance = TestModel()
-
-        f = BytesIO(
-            base64.b64decode(IMAGE_CONTENTS)
-        )
-
-        instance.image = ImageFile(
-            f,
-            name="test.jpg",
-        )
-
-        instance.save()
-
-    def test_can_write_content_file(self):
-
-        instance = TestModel()
+        instance1 = TestModel()
         
-        instance.image = ContentFile(
+        instance1.image = ContentFile(
             base64.b64decode(IMAGE_CONTENTS),
             name="test.jpg",
         )
 
-        instance.save()
+        assert instance1.width == WIDTH
+        assert instance1.height == HEIGHT
+
+        instance1.save()
+
+        assert instance1.width == WIDTH
+        assert instance1.height == HEIGHT
+
+        # Attempt saving the same image to a different instance
+        # And make sure the filename is different
+
+        instance2 = TestModel()
+        instance2.image = ContentFile(
+            base64.b64decode(IMAGE_CONTENTS),
+            name="test.jpg",
+        )
+        instance2.save()
+
+        assert instance1.image.name != instance2.image.name
