@@ -12,7 +12,7 @@ WIDTH = 100
 HEIGHT = 67
 
 
-class AnimalTestCase(TestCase):
+class NoReadTestCase(TestCase):
 
     def test_can_filename_mangling_preserved(self):
 
